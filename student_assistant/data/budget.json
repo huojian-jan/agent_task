@@ -10,6 +10,42 @@
       "note": "奶茶",
       "date": "2026-01-30",
       "created_at": "2026-01-30 16:10:09"
+    },
+    {
+      "id": 2,
+      "type": "expense",
+      "amount": 30.0,
+      "category": "休闲娱乐",
+      "note": "补记：1月20日打台球",
+      "date": "2026-01-30",
+      "created_at": "2026-01-30 16:45:37"
+    },
+    {
+      "id": 3,
+      "type": "expense",
+      "amount": 39.0,
+      "category": "休闲娱乐",
+      "note": "补记：1月20日看电影",
+      "date": "2026-01-30",
+      "created_at": "2026-01-30 16:45:41"
+    },
+    {
+      "id": 4,
+      "type": "expense",
+      "amount": 19.0,
+      "category": "交通出行",
+      "note": "补记：1月20日打车",
+      "date": "2026-01-30",
+      "created_at": "2026-01-30 16:45:45"
+    },
+    {
+      "id": 5,
+      "type": "expense",
+      "amount": -5.0,
+      "category": "娱乐",
+      "note": "购买彩票",
+      "date": "2026-01-30",
+      "created_at": "2026-01-30 18:06:20"
     }
   ]
 }

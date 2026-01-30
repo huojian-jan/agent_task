@@ -3,7 +3,7 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict, Any, List
 
 try:
     from config import TOOLS_DIR
@@ -16,6 +16,42 @@ class ToolExecutor:
     
     def __init__(self, tools_dir=None):
         self.tools_dir = tools_dir or TOOLS_DIR
+
+    def _extract_first_json_object(self, text: str) -> Optional[Dict[str, Any]]:
+        """从一段文本中尽力提取第一个“看起来像我们协议”的 JSON 对象。
+
+        兼容模型输出前后可能夹杂的自然语言/代码块围栏等内容。
+        """
+        if not text:
+            return None
+
+        decoder = json.JSONDecoder()
+        candidates: List[Dict[str, Any]] = []
+
+        for m in re.finditer(r"\{", text):
+            start = m.start()
+            try:
+                obj, _end = decoder.raw_decode(text[start:])
+            except json.JSONDecodeError:
+                continue
+
+            if isinstance(obj, dict):
+                # 优先返回明确带 type 的协议对象
+                obj_type = obj.get("type")
+                if obj_type in ("tool_call", "final"):
+                    return obj
+                candidates.append(obj)
+
+        # 其次尝试“无 type 但包含关键字段”的对象
+        for obj in candidates:
+            if "tool" in obj and "args" in obj:
+                obj.setdefault("type", "tool_call")
+                return obj
+            if "reply" in obj:
+                obj.setdefault("type", "final")
+                return obj
+
+        return None
     
     def execute(self, tool_name: str, args: str) -> dict:
         """执行指定工具"""
@@ -65,19 +101,36 @@ class ToolExecutor:
         """从LLM输出中解析工具调用
         
         期望格式:
-        <tool>schedule</tool>
-        <args>query --date today</args>
+        {"type":"tool_call","tool":"schedule","args":"query --date today"}
         """
-        tool_match = re.search(r'<tool>(.*?)</tool>', llm_output, re.DOTALL)
-        args_match = re.search(r'<args>(.*?)</args>', llm_output, re.DOTALL)
-        
+        obj = self._extract_first_json_object(llm_output)
+        if obj and obj.get("type") == "tool_call":
+            tool = obj.get("tool")
+            args = obj.get("args", "")
+            if isinstance(tool, str) and tool.strip():
+                if not isinstance(args, str):
+                    args = json.dumps(args, ensure_ascii=False)
+                return (tool.strip(), str(args).strip())
+
+        # 兼容旧的 XML 格式（避免历史 prompt/测试残留导致不可用）
+        tool_match = re.search(r"<tool>(.*?)</tool>", llm_output, re.DOTALL)
+        args_match = re.search(r"<args>(.*?)</args>", llm_output, re.DOTALL)
         if tool_match and args_match:
             return (tool_match.group(1).strip(), args_match.group(1).strip())
+
         return None
     
     def parse_reply(self, llm_output: str) -> Optional[str]:
         """从LLM输出中解析最终回复"""
-        reply_match = re.search(r'<reply>(.*?)</reply>', llm_output, re.DOTALL)
+        obj = self._extract_first_json_object(llm_output)
+        if obj and obj.get("type") == "final":
+            reply = obj.get("reply")
+            if isinstance(reply, str) and reply.strip():
+                return reply.strip()
+
+        # 兼容旧的 XML 格式
+        reply_match = re.search(r"<reply>(.*?)</reply>", llm_output, re.DOTALL)
         if reply_match:
             return reply_match.group(1).strip()
+
         return None

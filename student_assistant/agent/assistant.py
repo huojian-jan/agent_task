@@ -35,7 +35,7 @@ class AssistantAgent:
         
         max_iterations = 8  # 防止无限循环
         
-        for i in range(max_iterations):
+        for _ in range(max_iterations):
             # 获取上下文
             messages = self.get_context_messages()
             
@@ -75,7 +75,11 @@ class AssistantAgent:
                 continue
             
             # 3. 既不是回复也不是工具调用 -> 格式错误，触发自修正
-            error_msg = "系统提示：无法解析你的输出。请务必使用 <tool>...</tool> 调用工具，或者 <reply>...</reply> 回复用户。"
+            error_msg = (
+                '系统提示：无法解析你的输出。请务必输出严格 JSON：\n'
+                '- 工具调用：{"type":"tool_call","tool":"工具名称","args":"参数字符串"}\n'
+                '- 最终回复：{"type":"final","reply":"给用户的回复"}'
+            )
             print(f"[自修正] {error_msg}")
             
             self.history.append({"role": "assistant", "content": response})

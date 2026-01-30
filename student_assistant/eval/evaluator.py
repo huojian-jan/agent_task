@@ -18,7 +18,7 @@ class Evaluator:
         
         # 初始化 Agent
         llm = GeminiClient(api_key=config.GEMINI_API_KEY, model=config.GEMINI_MODEL)
-        pm = PromptManager(config.PROMPTS_DIR)
+        pm = PromptManager()
         executor = ToolExecutor()
         self.agent = AssistantAgent(llm, pm, executor, max_history=5)
         
@@ -41,13 +41,10 @@ class Evaluator:
                 # 执行对话
                 # 注意：为了评估准确性，我们可能需要拦截 tool_executor 的调用
                 # 或者通过分析 history 来判断
-                response = self.agent.chat(case['query'])
+                self.agent.chat(case['query'])
                 
                 end_time = datetime.now()
                 duration = (end_time - start_time).total_seconds()
-                
-                # 分析最后一轮历史
-                last_turn = self.agent.history[-2] if len(self.agent.history) >= 2 else {}
                 
                 # 评估指标
                 metrics = {
@@ -62,20 +59,29 @@ class Evaluator:
                 
                 # 检查是否调用了工具
                 tool_call = None
+                tool_name = None
+                tool_args = None
                 for msg in reversed(self.agent.history):
-                    if msg['role'] == 'assistant' and '<tool>' in msg['content']:
-                        tool_call = msg['content']
+                    if msg["role"] != "assistant":
+                        continue
+                    parsed = self.agent.executor.parse_tool_call(msg.get("content", ""))
+                    if parsed:
+                        tool_name, tool_args = parsed
+                        tool_call = msg.get("content", "")
                         break
                 
                 if tool_call:
                     # 检查工具名
-                    if case['expected_tool'] in tool_call.lower():
+                    if (tool_name and case["expected_tool"].lower() in tool_name.lower()) or (
+                        case["expected_tool"].lower() in tool_call.lower()
+                    ):
                         metrics["tool_match"] = True
                     
                     # 检查关键参数
                     all_params_found = True
                     for param in case.get('expected_params', []):
-                        if param not in tool_call:
+                        haystack = tool_args or tool_call
+                        if param not in haystack:
                             all_params_found = False
                             break
                     metrics["params_match"] = all_params_found
