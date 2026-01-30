@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white p-6 rounded shadow">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">📊 支出统计</h1>
+            <span class="text-gray-400 font-mono">{{ stats.month }}</span>
+        </div>
+
+        <div class="space-y-6">
+            {% for cat, amount in stats.data.items() %}
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="font-bold">{{ cat }}</span>
+                    <span class="text-gray-500">¥{{ amount }}</span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-4">
+                    <!-- 这里的百分比计算可以更精确，简单演示 -->
+                    <div class="bg-green-400 h-4 rounded-full" style="width: 70%"></div>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-center py-8 text-gray-400">本月还没有支出数据</p>
+            {% endfor %}
+        </div>
+
+        <div class="mt-8 pt-6 border-t text-center">
+            <a href="/budget" class="text-blue-500 hover:underline">&larr; 返回账单列表</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

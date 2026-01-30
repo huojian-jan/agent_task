@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-white p-6 rounded shadow mb-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">📚 我的课程表</h1>
+        <div class="flex gap-2">
+            {% for wd in ["monday", "tuesday", "wednesday", "thursday", "friday"] %}
+            <a href="/course?weekday={{ wd }}" 
+               class="px-3 py-1 rounded {{ 'bg-blue-500 text-white' if current_weekday == wd else 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+               {{ wd|capitalize }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for course in courses %}
+        <div class="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-transparent">
+            <div class="text-blue-600 font-mono font-bold mb-1">{{ course.time }}</div>
+            <div class="text-lg font-bold mb-2">{{ course.name }}</div>
+            <div class="text-gray-500 flex items-center">
+                <span class="mr-2 text-sm">📍 {{ course.location }}</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-full py-12 text-center text-gray-400">
+            那天好像没有课哦，去图书馆学习吧！📖
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- 今日日程 -->
+    <div class="bg-white p-6 rounded shadow">
+        <h2 class="text-lg font-bold mb-4">📅 今日日程</h2>
+        {% if today_schedules %}
+            <ul class="space-y-2">
+                {% for item in today_schedules %}
+                <li class="flex justify-between border-b pb-2">
+                    <span class="font-mono text-blue-600">{{ item.time }}</span>
+                    <span>{{ item.event }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-gray-500">今天没有安排日程</p>
+        {% endif %}
+        <div class="mt-4 text-right">
+            <a href="/schedule" class="text-sm text-blue-500 hover:underline">管理日程 &rarr;</a>
+        </div>
+    </div>
+
+    <!-- 概览 -->
+    <div class="bg-white p-6 rounded shadow">
+        <h2 class="text-lg font-bold mb-4">💰 本月财务</h2>
+        <div class="flex justify-between items-center text-center">
+            <div>
+                <div class="text-gray-500 text-sm">收入</div>
+                <div class="text-green-600 font-bold">¥{{ budget_summary.monthly_income }}</div>
+            </div>
+            <div>
+                <div class="text-gray-500 text-sm">支出</div>
+                <div class="text-red-600 font-bold">¥{{ budget_summary.monthly_expense }}</div>
+            </div>
+            <div>
+                <div class="text-gray-500 text-sm">余额</div>
+                <div class="text-blue-600 font-bold text-xl">¥{{ budget_summary.balance }}</div>
+            </div>
+        </div>
+        <div class="mt-4 text-right">
+            <a href="/budget" class="text-sm text-blue-500 hover:underline">记一笔 &rarr;</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

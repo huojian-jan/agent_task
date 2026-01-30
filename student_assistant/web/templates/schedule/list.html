@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-white p-6 rounded shadow mb-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">📅 日程管理</h1>
+        <form class="flex gap-2">
+            <input type="date" name="date" value="{{ current_date }}" class="border rounded px-2 py-1">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">筛选</button>
+        </form>
+    </div>
+
+    <!-- 添加表单 -->
+    <div class="mb-8 p-4 bg-gray-50 rounded border border-dashed border-gray-300">
+        <h2 class="text-sm font-bold text-gray-500 mb-4 uppercase">快速添加</h2>
+        <form action="/schedule/add" method="post" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <input type="date" name="date" required class="border rounded px-3 py-2">
+            <input type="time" name="time" required class="border rounded px-3 py-2">
+            <input type="text" name="event" placeholder="做什么？" required class="border rounded px-3 py-2">
+            <button type="submit" class="bg-green-500 text-white rounded px-4 py-2 hover:bg-green-600">添加日程</button>
+        </form>
+    </div>
+
+    <!-- 日程列表 -->
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="border-b">
+                    <th class="py-2">时间</th>
+                    <th class="py-2">事件</th>
+                    <th class="py-2">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in schedules %}
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="py-3 font-mono text-blue-600">{{ item.time }}</td>
+                    <td class="py-3">{{ item.event }}</td>
+                    <td class="py-3">
+                        <form action="/schedule/delete/{{ item.id }}" method="post" onsubmit="return confirm('确定删除吗？')">
+                            <button type="submit" class="text-red-500 hover:underline">删除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" class="py-8 text-center text-gray-400">该日期没有日程安排</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

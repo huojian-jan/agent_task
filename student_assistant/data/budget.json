@@ -1,0 +1,15 @@
+{
+  "monthly_budget": 1500,
+  "category_budgets": {},
+  "records": [
+    {
+      "id": 1,
+      "type": "expense",
+      "amount": 20.0,
+      "category": "饮品",
+      "note": "奶茶",
+      "date": "2026-01-30",
+      "created_at": "2026-01-30 16:10:09"
+    }
+  ]
+}

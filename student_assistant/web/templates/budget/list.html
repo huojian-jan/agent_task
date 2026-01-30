@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- 统计卡片 -->
+    <div class="lg:col-span-1 space-y-6">
+        <div class="bg-white p-6 rounded shadow">
+            <h2 class="text-lg font-bold mb-4">💰 本月摘要</h2>
+            <div class="space-y-4">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">收入</span>
+                    <span class="text-green-600 font-bold">¥{{ summary.monthly_income }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">支出</span>
+                    <span class="text-red-600 font-bold">¥{{ summary.monthly_expense }}</span>
+                </div>
+                <hr>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">余额</span>
+                    <span class="text-blue-600 font-bold text-xl">¥{{ summary.balance }}</span>
+                </div>
+            </div>
+            <div class="mt-6 pt-6 border-t">
+                <div class="text-sm text-gray-500 mb-2">预算进度 (¥{{ summary.monthly_budget }})</div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    {% set ratio = (summary.monthly_expense / summary.monthly_budget * 100)|int %}
+                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ [ratio, 100]|min }}%"></div>
+                </div>
+                <div class="text-right text-xs text-gray-400 mt-1">{{ ratio }}%</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded shadow">
+            <h2 class="text-lg font-bold mb-4">✍️ 记一笔</h2>
+            <form action="/budget/add" method="post" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-500 mb-1">类型</label>
+                    <select name="type" class="w-full border rounded px-3 py-2">
+                        <option value="expense">支出</option>
+                        <option value="income">收入</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-500 mb-1">金额</label>
+                    <input type="number" step="0.01" name="amount" required class="w-full border rounded px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-500 mb-1">类别</label>
+                    <input type="text" name="category" placeholder="餐饮/交通/学习等" required class="w-full border rounded px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-500 mb-1">备注</label>
+                    <input type="text" name="note" class="w-full border rounded px-3 py-2">
+                </div>
+                <button type="submit" class="w-full bg-blue-500 text-white font-bold py-2 rounded hover:bg-blue-600">保存记录</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 列表 -->
+    <div class="lg:col-span-2">
+        <div class="bg-white p-6 rounded shadow">
+            <h2 class="text-lg font-bold mb-6">📝 账单明细</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b text-gray-400 text-sm">
+                            <th class="py-2 text-left">日期</th>
+                            <th class="py-2 text-left">类别</th>
+                            <th class="py-2 text-left">备注</th>
+                            <th class="py-2 text-right">金额</th>
+                            <th class="py-2">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records|sort(attribute='date', reverse=True) %}
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="py-4 text-sm text-gray-500">{{ record.date }}</td>
+                            <td class="py-4">
+                                <span class="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">{{ record.category }}</span>
+                            </td>
+                            <td class="py-4 text-sm">{{ record.note }}</td>
+                            <td class="py-4 text-right font-bold {{ 'text-red-500' if record.type == 'expense' else 'text-green-500' }}">
+                                {{ '-' if record.type == 'expense' else '+' }}¥{{ record.amount }}
+                            </td>
+                            <td class="py-4 text-center">
+                                <form action="/budget/delete/{{ record.id }}" method="post" onsubmit="return confirm('确定删除吗？')">
+                                    <button type="submit" class="text-red-400 hover:text-red-600 text-sm">删除</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="py-12 text-center text-gray-400">本月还没有收支记录记录</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

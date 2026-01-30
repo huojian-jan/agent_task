@@ -1,0 +1,50 @@
+[
+    {
+        "id": 1,
+        "name": "查询天气",
+        "query": "明天上海天气怎么样？",
+        "expected_tool": "weather",
+        "expected_params": ["date"],
+        "description": "测试天气查询工具的调用"
+    },
+    {
+        "id": 2,
+        "name": "添加日程",
+        "query": "帮我记一下，明天下午三点在图书馆开会，大概一个小时。",
+        "expected_tool": "schedule",
+        "expected_params": ["date", "time", "event", "duration"],
+        "description": "测试日程添加工具，包含模糊日期识别"
+    },
+    {
+        "id": 3,
+        "name": "查询课程",
+        "query": "我这周五下午有什么课？",
+        "expected_tool": "course",
+        "expected_params": ["weekday"],
+        "description": "测试课程查询工具，包含星期识别"
+    },
+    {
+        "id": 4,
+        "name": "记账",
+        "query": "刚才晚饭吃了25块钱，记一下。",
+        "expected_tool": "budget",
+        "expected_params": ["type", "amount", "category"],
+        "description": "测试记账工具，包含金额和类别识别"
+    },
+    {
+        "id": 5,
+        "name": "内存检索",
+        "query": "我之前跟你说我个子多高来着？",
+        "expected_tool": "memory",
+        "expected_params": ["keyword"],
+        "description": "测试长短期记忆检索工具"
+    },
+    {
+        "id": 6,
+        "name": "冲突检测",
+        "query": "明天下午3点我有空吗？想约同学打王者。",
+        "expected_tool": "schedule",
+        "expected_params": ["date", "time"],
+        "description": "测试日程查询和潜在冲突意识"
+    }
+]

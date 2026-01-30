@@ -1,0 +1,44 @@
+[
+  {
+    "weekday": 0,
+    "time": "08:00-09:40",
+    "name": "高等数学",
+    "location": "A301"
+  },
+  {
+    "weekday": 0,
+    "time": "14:00-15:40",
+    "name": "大学物理",
+    "location": "B102"
+  },
+  {
+    "weekday": 1,
+    "time": "10:00-11:40",
+    "name": "线性代数",
+    "location": "A205"
+  },
+  {
+    "weekday": 2,
+    "time": "08:00-09:40",
+    "name": "大学英语",
+    "location": "C303"
+  },
+  {
+    "weekday": 2,
+    "time": "14:00-15:40",
+    "name": "计算机导论",
+    "location": "D401"
+  },
+  {
+    "weekday": 3,
+    "time": "14:00-15:40",
+    "name": "体育(篮球)",
+    "location": "体育馆"
+  },
+  {
+    "weekday": 4,
+    "time": "08:00-11:40",
+    "name": "Python程序设计",
+    "location": "机房5"
+  }
+]
