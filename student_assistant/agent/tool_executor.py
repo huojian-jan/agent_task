@@ -36,7 +36,10 @@ class ToolExecutor:
                 continue
 
             if isinstance(obj, dict):
-                # 优先返回明确带 type 的协议对象
+                # 优先返回新格式：含 tool_calls 或 reply 的统一 JSON
+                if "tool_calls" in obj or "reply" in obj:
+                    return obj
+                # 兼容旧格式：明确带 type 的协议对象
                 obj_type = obj.get("type")
                 if obj_type in ("tool_call", "final"):
                     return obj
@@ -97,6 +100,58 @@ class ToolExecutor:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
+    def parse_structured_response(
+        self, llm_output: str
+    ) -> Optional[Dict[str, Any]]:
+        """解析模型输出的统一 JSON，返回 final 或 tool_calls 列表。
+
+        返回格式之一：
+        - {"type": "final", "reply": str}
+        - {"type": "tool_calls", "calls": [(tool_name, args_str), ...]}
+        无法解析时返回 None。
+        """
+        obj = self._extract_first_json_object(llm_output)
+        if not obj or not isinstance(obj, dict):
+            return None
+
+        # 新格式：tool_calls 数组
+        tool_calls_raw = obj.get("tool_calls")
+        if isinstance(tool_calls_raw, list) and len(tool_calls_raw) > 0:
+            calls: List[Tuple[str, str]] = []
+            for item in tool_calls_raw:
+                if not isinstance(item, dict):
+                    continue
+                tool = item.get("tool")
+                args = item.get("args", "")
+                if isinstance(tool, str) and tool.strip():
+                    if not isinstance(args, str):
+                        args = json.dumps(args, ensure_ascii=False)
+                    calls.append((tool.strip(), str(args).strip()))
+            if calls:
+                return {"type": "tool_calls", "calls": calls}
+
+        # 新格式：reply 非空
+        reply = obj.get("reply")
+        if isinstance(reply, str) and reply.strip():
+            return {"type": "final", "reply": reply.strip()}
+
+        # 兼容旧格式：单条 tool_call
+        if obj.get("type") == "tool_call":
+            tool = obj.get("tool")
+            args = obj.get("args", "")
+            if isinstance(tool, str) and tool.strip():
+                if not isinstance(args, str):
+                    args = json.dumps(args, ensure_ascii=False)
+                return {"type": "tool_calls", "calls": [(tool.strip(), str(args).strip())]}
+
+        # 兼容旧格式：final
+        if obj.get("type") == "final":
+            final_reply = self.parse_reply(llm_output)
+            if final_reply:
+                return {"type": "final", "reply": final_reply}
+
+        return None
+
     def parse_tool_call(self, llm_output: str) -> Optional[Tuple[str, str]]:
         """从LLM输出中解析工具调用
         

@@ -57,30 +57,40 @@ class Evaluator:
                     "error": None
                 }
                 
-                # 检查是否调用了工具
-                tool_call = None
-                tool_name = None
-                tool_args = None
+                # 检查是否调用了工具（支持新格式：tool_calls 列表）
+                tool_call_content = None
+                matched_tool_name = None
+                matched_tool_args = None
                 for msg in reversed(self.agent.history):
                     if msg["role"] != "assistant":
                         continue
-                    parsed = self.agent.executor.parse_tool_call(msg.get("content", ""))
-                    if parsed:
-                        tool_name, tool_args = parsed
-                        tool_call = msg.get("content", "")
-                        break
+                    content = msg.get("content", "")
+                    parsed = self.agent.executor.parse_structured_response(content)
+                    if parsed and parsed.get("type") == "tool_calls":
+                        for tool_name, tool_args in parsed.get("calls", []):
+                            if case["expected_tool"].lower() in (tool_name or "").lower():
+                                matched_tool_name = tool_name
+                                matched_tool_args = tool_args
+                                tool_call_content = content
+                                break
+                        if tool_call_content:
+                            break
+                    # 兼容旧格式：单条 tool_call
+                    if not tool_call_content:
+                        single = self.agent.executor.parse_tool_call(content)
+                        if single:
+                            matched_tool_name, matched_tool_args = single
+                            tool_call_content = content
+                            break
                 
-                if tool_call:
-                    # 检查工具名
-                    if (tool_name and case["expected_tool"].lower() in tool_name.lower()) or (
-                        case["expected_tool"].lower() in tool_call.lower()
+                if tool_call_content:
+                    if (matched_tool_name and case["expected_tool"].lower() in matched_tool_name.lower()) or (
+                        case["expected_tool"].lower() in tool_call_content.lower()
                     ):
                         metrics["tool_match"] = True
-                    
-                    # 检查关键参数
                     all_params_found = True
                     for param in case.get('expected_params', []):
-                        haystack = tool_args or tool_call
+                        haystack = matched_tool_args or tool_call_content
                         if param not in haystack:
                             all_params_found = False
                             break

@@ -50,40 +50,35 @@ class AssistantAgent:
             
             print(f"\n[AI思考] {response[:100]}..." if len(response) > 100 else f"\n[AI思考] {response}")
 
-            # 1. 尝试解析最终回复
-            reply = self.executor.parse_reply(response)
-            if reply:
+            # 统一解析：final 或 tool_calls 列表
+            parsed = self.executor.parse_structured_response(response)
+            if parsed is None:
+                # 格式错误，触发自修正
+                error_msg = (
+                    '系统提示：无法解析你的输出。请务必输出一个严格 JSON 对象，且包含：\n'
+                    '- tool_calls：数组，每项 {"tool":"工具名","args":"参数字符串"}，可为空 []\n'
+                    '- reply：字符串或 null。有最终回复时填 reply，需要调工具时填 tool_calls，二者二选一。'
+                )
+                print(f"[自修正] {error_msg}")
                 self.history.append({"role": "assistant", "content": response})
-                return reply
-            
-            # 2. 尝试解析工具调用
-            tool_call = self.executor.parse_tool_call(response)
-            if tool_call:
-                tool_name, args = tool_call
+                self.history.append({"role": "user", "content": error_msg})
+                continue
+
+            if parsed["type"] == "final":
+                self.history.append({"role": "assistant", "content": response})
+                return parsed["reply"]
+
+            # parsed["type"] == "tool_calls"
+            calls = parsed["calls"]
+            results_parts = []
+            for tool_name, args in calls:
                 print(f"[调用工具] {tool_name} {args}")
-                
-                # 执行工具
                 result = self.executor.execute(tool_name, args)
                 print(f"[工具结果] {json.dumps(result, ensure_ascii=False)[:200]}...")
-                
-                # 将LLM响应和工具结果加入历史
-                self.history.append({"role": "assistant", "content": response})
-                
-                # 构造工具返回消息
-                tool_msg = f"工具 {tool_name} 执行结果：{json.dumps(result, ensure_ascii=False)}"
-                self.history.append({"role": "user", "content": tool_msg})
-                continue
-            
-            # 3. 既不是回复也不是工具调用 -> 格式错误，触发自修正
-            error_msg = (
-                '系统提示：无法解析你的输出。请务必输出严格 JSON：\n'
-                '- 工具调用：{"type":"tool_call","tool":"工具名称","args":"参数字符串"}\n'
-                '- 最终回复：{"type":"final","reply":"给用户的回复"}'
-            )
-            print(f"[自修正] {error_msg}")
-            
+                results_parts.append(f"工具 {tool_name} 执行结果：{json.dumps(result, ensure_ascii=False)}")
             self.history.append({"role": "assistant", "content": response})
-            self.history.append({"role": "user", "content": error_msg})
-            # 下一轮循环将把这个错误反馈给 LLM
-        
+            tool_msg = "\n\n".join(results_parts)
+            self.history.append({"role": "user", "content": tool_msg})
+            continue
+
         return "抱歉，我思考了很久还是没能解决你的问题，可能是陷入了死循环。"
